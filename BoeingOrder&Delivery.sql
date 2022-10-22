@@ -6,24 +6,39 @@ From [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries];
 SELECT COUNT (Distinct(Country)) AS #ofCountries
 From [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries];
 
---What customer ordered the most and when was that?
+--What customer ordered the most at a given time and when was that?
 
 SELECT [Customer Name], [Order Total], [Order Year], [Order Month]
 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
 WHERE [Order Total] = (SELECT MAX([Order Total]) 
 					 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries])
 
+SELECT [Customer Name], MAX([Order Total])
+FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
+GROUP BY [Customer Name]
+ORDER BY MAX([Order Total]) DESC
+	OFFSET 0 ROWS
+	FETCH NEXT 1 ROWS ONLY
+
 --How many of those orders went through for SpiceJet?
 
 SELECT [Customer Name], [Delivery Total], [Delivery Year ], [Unfilled Orders]
 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
-WHERE [Order Total] = (SELECT MAX([Order Total]) 
-					 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries])
+WHERE [Customer Name] = (SELECT [Customer Name]
+							FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
+							GROUP BY [Customer Name]
+							ORDER BY MAX([Order Total]) DESC
+								OFFSET 0 ROWS
+								FETCH NEXT 1 ROWS ONLY)
 
 
 --What is the ratio of orders to delieveries?
 SELECT [Customer Name], [Order Year], [Order Month], [Delivery Year ], [Order Total]/[Delivery Total] AS DeliveryRatio
 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
+
+SELECT [Customer Name], [Order Year], [Order Month], [Delivery Year ], (CAST([Order Year] AS int)-CAST([Delivery Year ] AS int) as DeliveryRatio
+FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries];
+
 --First I have to change the data type but that aint working. Ill comment it out
 --ALTER TABLE [BoeingHistOrder&Deliveries]
 --ALTER COLUMN [Order Total] int
@@ -41,11 +56,17 @@ FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
 Group By [Customer Name]
 ORDER BY ReturningCustomer DESC
 
---CREATE VIEW SpiceJet AS
+USE [BoeingOrder&Delivery]
+GO
+CREATE VIEW 
+dbo.Spice_Jet AS
 SELECT Distinct([Customer Name]), COUNT([CUSTOMER NAME]) AS ReturningCustomer
 FROM [BoeingOrder&Delivery]..[BoeingHistOrders&Deliveries]
 WHERE [Customer Name]= 'SpiceJet'
-Group By [Customer Name]
+Group By [Customer Name];
+
+Select *
+FROM [BoeingOrder&Delivery]..Spice_Jet;
 
 --Now I am curious about the engine and Model Series used?
 SELECT *
